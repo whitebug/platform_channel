@@ -5,42 +5,73 @@ import Flutter
 @objc class AppDelegate: FlutterAppDelegate {
     
     private let EVENT_CHANNEL = "im.parrot.keyPressedChannel"
-    
     private var streamHandler: NativeStreamHandler?
+    private var currentKey = "no key"
 
     override var keyCommands: [UIKeyCommand]? {
         return [
-            UIKeyCommand(input: "\r", modifierFlags: [], action: #selector(enterPressed)),
-            UIKeyCommand(input: InputKey.one.rawValue,
-              modifierFlags: .shift,
-              action: #selector(performCommand(sender:)),
-              discoverabilityTitle: NSLocalizedString("LowPriority", comment: "Low priority")),
+            UIKeyCommand(input: InputKey.enter.rawValue,
+              modifierFlags: [],
+              action: #selector(sendNoModifierKeyToSteam(sender:)),
+              discoverabilityTitle: NSLocalizedString("Enter", comment: "Enter")),
+            UIKeyCommand(input: InputKey.ctrlF.rawValue,
+                         modifierFlags: .control,
+              action: #selector(sendCtrlKeyToSteam(sender:)),
+              discoverabilityTitle: NSLocalizedString("ControlF", comment: "Control F")),
+            UIKeyCommand(input: InputKey.ctrlF.rawValue,
+                         modifierFlags: .shift,
+              action: #selector(sendShiftKeyToStream(sender:)),
+              discoverabilityTitle: NSLocalizedString("ShiftF", comment: "Shift F")),
         ]
-    }
-
-    @objc func enterPressed() {
-        print("Enter pressed")
-        currentKey = "enter"
-        // send key name to stream
-        keysToStream(key: currentKey)
     }
     
     private enum InputKey: String {
-        case one = "1"
-        case two = "2"
-        case three = "3"
+        case enter = "\r"
+        case ctrlF = "f"
     }
     
-    @objc func performCommand(sender: UIKeyCommand) {
+    @objc func sendNoModifierKeyToSteam(sender: UIKeyCommand) {
+        guard let key = InputKey(rawValue: sender.input ?? "no key") else {
+        return
+      }
+        currentKey = key.rawValue
+        switch key.rawValue {
+        case "\r":
+            currentKey = "enter"
+        default:
+            currentKey = "noKey"
+        }
+        keysToStream(key: currentKey)
+    }
+    
+    @objc func sendCtrlKeyToSteam(sender: UIKeyCommand) {
+        guard let key = InputKey(rawValue: sender.input ?? "no key") else {
+        return
+      }
+        currentKey = key.rawValue
+        switch key.rawValue {
+        case "f":
+            currentKey = "ctrlF"
+        default:
+            currentKey = "noCtrlKey"
+        }
+        keysToStream(key: currentKey)
+    }
+    
+    @objc func sendShiftKeyToStream(sender: UIKeyCommand) {
         guard let key = InputKey(rawValue: sender.input ?? "no key") else {
         return
       }
         currentKey = key.rawValue
         print(currentKey)
+        switch key.rawValue {
+        case "f":
+            currentKey = "shiftF"
+        default:
+            currentKey = "noShiftKey"
+        }
         keysToStream(key: currentKey)
     }
-    
-    var currentKey = "no key"
         
     func getKeyPressed() -> String {
         return currentKey

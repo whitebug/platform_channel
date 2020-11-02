@@ -2,8 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:keyboard_ios/key.dart';
+import 'package:keyboard_ios/service_locator.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  setupLocator();
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -32,20 +37,24 @@ class _MyHomePageState extends State<MyHomePage> {
   static const platform = const MethodChannel('im.parrot.keyPressed');
   String _currentKey = 'no key has been pressed';
   final TextEditingController textEditingController = TextEditingController();
-  static Stream<String> _keyboardStream;
   StreamSubscription<String> _keyboardStreamSubscription;
   String _streamResponse = 'no response';
   bool _change = false;
 
-  static const EventChannel _eventChannel = const EventChannel(
-    'im.parrot.keyPressedChannel',
-  );
-
+  void keyAction(String key) {
+    setState(() {
+      _streamResponse = key;
+      _change = !_change;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    _listenToKeyStream();
+    _keyboardStreamSubscription =
+        locator<KeyboardListener>().subscribeToKeyStream(
+      keyAction: keyAction,
+    );
   }
 
   @override
@@ -66,23 +75,6 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _currentKey = keyPressed;
     });
-  }
-
-  static Stream<String> _getKeyboardStream() {
-    if ( _keyboardStream == null ) _keyboardStream =
-        _eventChannel.receiveBroadcastStream().cast<String>();
-    return _keyboardStream;
-  }
-
-  void _listenToKeyStream() {
-    _keyboardStreamSubscription = _getKeyboardStream().listen(
-            (string) {
-          setState(() {
-            _streamResponse = string;
-            _change = !_change;
-          });
-        }
-    );
   }
 
   @override
@@ -138,4 +130,3 @@ class _ColoredSomethingState extends State<ColoredSomething> {
     );
   }
 }
-
